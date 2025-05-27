@@ -1,6 +1,4 @@
 import uuid
-import sys
-import io
 import time
 
 from dotenv import load_dotenv
@@ -33,7 +31,7 @@ def send_message_with_retry(runner, user_id, session_id, message, max_retries=3)
             error_msg = str(e)
             if "503" in error_msg or "overloaded" in error_msg.lower():
                 if attempt < max_retries - 1:
-                    wait_time = (attempt + 1) * 2  
+                    wait_time = (attempt + 1) * 2
                     print(f"⏳ Model busy, retrying in {wait_time} seconds...")
                     time.sleep(wait_time)
                     continue
@@ -45,24 +43,59 @@ def send_message_with_retry(runner, user_id, session_id, message, max_retries=3)
     return "ERROR_MAX_RETRIES"
 
 
+def collect_user_preferences():
+    """Collect user preferences interactively"""
+    print("🤖 Personal AI Assistant Setup")
+    print("Let's get to know you better! Please answer a few questions:\n")
+
+    name = input("What's your name? ").strip()
+    if not name:
+        name = "User"
+
+    print(f"\nNice to meet you, {name}! 👋\n")
+
+    print("Tell me about your interests and preferences:")
+
+    hobbies = input("What are your favorite hobbies or activities? ").strip()
+    food = input("What's your favorite type of food? ").strip()
+    entertainment = input("What's your favorite TV show, movie, or book? ").strip()
+    other = input("Anything else you'd like me to remember about you? ").strip()
+
+    preferences_parts = []
+    if hobbies:
+        preferences_parts.append(f"Hobbies/Activities: {hobbies}")
+    if food:
+        preferences_parts.append(f"Favorite food: {food}")
+    if entertainment:
+        preferences_parts.append(f"Favorite entertainment: {entertainment}")
+    if other:
+        preferences_parts.append(f"Other: {other}")
+
+    preferences = "\n".join(preferences_parts) if preferences_parts else "No specific preferences provided."
+
+    return name, preferences
+
+
 def main():
-    print("🤖 Brandon Bot Terminal Chat")
-    print("Type your messages and press Enter. Type 'quit' or 'exit' to stop.\n")
+    print("=" * 50)
+    print("🤖 Personal AI Assistant Terminal Chat")
+    print("=" * 50)
+
+    # Collect user preferences first
+    user_name, user_preferences = collect_user_preferences()
+
+    print(f"\n✅ Great! I'll remember your preferences, {user_name}.")
+    print("Now let's start chatting! Type 'quit' or 'exit' to stop.\n")
 
     session_service_stateful = InMemorySessionService()
 
     initial_state = {
-        "user_name": "Brandon Hancock",
-        "user_preferences": """
-            I like to play Pickleball, Disc Golf, and Tennis.
-            My favorite food is Mexican.
-            My favorite TV show is Game of Thrones.
-            Loves it when people like and subscribe to his YouTube channel.
-        """,
+        "user_name": user_name,
+        "user_preferences": user_preferences,
     }
 
-    APP_NAME = "Brandon Bot"
-    USER_ID = "brandon_hancock"
+    APP_NAME = "Personal AI Assistant"
+    USER_ID = user_name.lower().replace(" ", "_")
     SESSION_ID = str(uuid.uuid4())
     session_service_stateful.create_session(
         app_name=APP_NAME,
@@ -103,9 +136,9 @@ def main():
             elif agent_response.startswith("ERROR:"):
                 print(f"\r❌ {agent_response}")
             elif agent_response:
-                print(f"\r🤖 Brandon Bot: {agent_response}")
+                print(f"\r🤖 AI Assistant: {agent_response}")
             else:
-                print("\r🤖 Brandon Bot: Sorry, I couldn't process that message.")
+                print("\r🤖 AI Assistant: Sorry, I couldn't process that message.")
 
             print()
 
